@@ -1,75 +1,33 @@
+---
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: s3.aws.store.defenseunicorns.com
+  name: objectstorage-composition
   labels:
+    crossplane.io/xrd: xobjectstorages.defenseunicorns.com
     provider: aws
 spec:
-  writeConnectionSecretsToNamespace: crossplane-system
   compositeTypeRef:
-    apiVersion: s3.defenseunicorns.com/v1alpha1
-    kind: Bucket
+    apiVersion: xobjectstorages.defenseunicorns.com/v1alpha1
+    kind: XObjectStorage
+  writeConnectionSecretsToNamespace: crossplane-system
   resources:
-    # - name: dbsubnetgroup
-    #   base:
-    #     apiVersion: database.aws.crossplane.io/v1beta1
-    #     kind: DBSubnetGroup
-    #     spec:
-    #       forProvider:
-    #         subnetIdRefs:
-    #           - name: cpss-private-us-east-1a
-    #           - name: cpss-private-us-east-1b
-    #       recliamPolicy: Delete
-    #       providerRef:
-    #         name: aws-provider
-    # - name: securitygroup
-    #   base:
-    #     apiVersion: ec2.aws.crossplane.io/v1beta1
-    #     kind: SecurityGroup
-    #     spec:
-    #       forProvider:
-    #         region: us-east-1
-    #         vpcIdSelector: # TODO attach to the vpc :thinking_face:
-    #           matchControllerRef: true
-    #         groupName: crossplane-getting-started
-    #         description: Allow access to PostgreSQL
-    #         ingress:
-    #           - fromPort: 5432
-    #             toPort: 5432
-    #             ipProtocol: tcp
-    #             ipRanges:
-    #               - cidrIp: 0.0.0.0/0
-    #                 description: Everywhere
-    - name: s3Bucket
+    - name: s3bucket
       base:
         apiVersion: s3.aws.crossplane.io/v1beta1
         kind: Bucket
+        metadata: {}
         spec:
           forProvider:
-            acl: private
-            locationConstraint: us-east-1
-            paymentConfiguration:
-              payer: BucketOwner
-            publicAccessBlockConfiguration:
-              blockPublicPolicy: true
-            serverSideEncryptionConfiguration:
-              rules:
-                - applyServerSideEncryptionByDefault:
-                    sseAlgorithm: AES256
-            versioningConfiguration:
-              status: Enabled
-
-      # patches:
-      #   - fromFieldPath: "metadata.uid"
-      #     toFieldPath: "spec.writeConnectionSecretToRef.name"
-      #     transforms:
-      #       - type: string
-      #         string:
-      #           fmt: "%s-postgresql"
-      #   - fromFieldPath: "spec.parameters.storageGB"
-      #     toFieldPath: "spec.forProvider.allocatedStorage"
-      # connectionDetails:
-      #   - fromConnectionSecretKey: username
-      #   - fromConnectionSecretKey: password
-      #   - fromConnectionSecretKey: endpoint
-      #   - fromConnectionSecretKey: port
+            # public-read should enable public access for static website hosting
+            # see https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket
+            acl: "public-read"
+            websiteConfiguration:
+              indexDocument: 
+                suffix: "index.html"
+          deletionPolicy: Delete
+      patches:
+        - fromFieldPath: "spec.parameters.bucketName"
+          toFieldPath: "metadata.name"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.locationConstraint"
