@@ -1,3 +1,18 @@
+---
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: secure-rds
+  annotations:
+    provider: aws
+    vpc: default
+spec:
+  crossplane:
+    version: ">=v1.4.0-0"
+  dependsOn:
+    - provider: crossplane/provider-aws
+      version: ">=v0.18.2"
+---
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
@@ -29,17 +44,17 @@ spec:
         spec:
           forProvider:
             region: us-east-1
-            vpcIdSelector: # TODO attach to the vpc :thinking_face:
-              matchControllerRef: true
-            groupName: crossplane-getting-started
+            vpcIdRef:
+              name: crossplane-secure-storage
+            groupName: crossplane-security-group
             description: Allow access to PostgreSQL
             ingress:
               - fromPort: 5432
                 toPort: 5432
                 ipProtocol: tcp
                 ipRanges:
-                  - cidrIp: 0.0.0.0/0
-                    description: Everywhere
+                  - cidrIp: 10.0.0.0/16
+                    description: Local VPC Traffic
     - name: rdsinstance
       base:
         apiVersion: database.aws.crossplane.io/v1beta1
@@ -48,9 +63,7 @@ spec:
           forProvider:
             region: us-east-1
             dbSubnetGroupNameSelector:
-              #matchControllerRef: true
-              matchLabels:
-                name: cpss-private-us-east-1a
+              matchControllerRef: true
             vpcSecurityGroupIDSelector:
               matchControllerRef: true
             dbInstanceClass: db.t2.small
@@ -58,7 +71,7 @@ spec:
             engine: postgres
             engineVersion: "12"
             skipFinalSnapshotBeforeDeletion: true
-            publiclyAccessible: true
+            publiclyAccessible: false
           writeConnectionSecretToRef:
             namespace: crossplane-system
       patches:
