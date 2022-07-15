@@ -5,7 +5,7 @@ resource "aws_eip" "nat_gw_eip" {
 
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_gw_eip.id
-  subnet_id     = aws_subnet.public_subnet.id
+  subnet_id     = aws_subnet.public_subnet.0.id
 
   tags = {
     Name = "cpss-nat-gw"
@@ -14,11 +14,13 @@ resource "aws_nat_gateway" "nat_gw" {
 
 # Private subnet
 resource "aws_subnet" "private_subnet" {
+  count      = length(var.azs)
+
   vpc_id     = aws_vpc.cpss_vpc.id
-  cidr_block = "10.0.1.0/24"
+  cidr_block = "10.0.${length(var.azs) + count.index}.0/24"
 
   tags = {
-    Name = "cpss-private"
+    Name = "cpss-private-${var.azs[count.index]}"
   }
 }
 
@@ -38,7 +40,9 @@ resource "aws_route_table" "private_rte" {
 
 # Associate the private route table with the private subnets
 resource "aws_route_table_association" "private_assoc" {
-  subnet_id      = aws_subnet.private_subnet.id
+  count          = length(var.azs)
+
+  subnet_id      = aws_subnet.private_subnet[count.index].id
   route_table_id = aws_route_table.private_rte.id
 }
 

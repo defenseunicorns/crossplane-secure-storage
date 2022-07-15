@@ -1,6 +1,6 @@
 # Make the bastion accessible
 resource "aws_network_interface" "bastion_eni" {
-  subnet_id       = aws_subnet.public_subnet.id
+  subnet_id       = aws_subnet.public_subnet.0.id
   security_groups = [aws_security_group.cpss_bastion_sg.id]
 
   tags = {
@@ -28,4 +28,8 @@ resource "aws_instance" "cpss_bastion" {
   tags = {
     Name = "cpss-bastion"
   }
+}
+
+output "bastion_public_ip" {
+  value     = aws_instance.cpss_bastion.public_ip
 }

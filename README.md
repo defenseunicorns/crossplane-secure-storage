@@ -11,9 +11,38 @@ Crossplane allows SREs and DevSecOps enthusiasts to dynamically provision cloud 
 
 ## Setup
 
-1. 
-2. 
-3. 
+1. Deploy crossplane
+    ```
+    kubectl create namespace crossplane-system
+    helm repo add crossplane-stable https://charts.crossplane.io/stable
+    helm repo update
+    helm install crossplane --namespace crossplane-system crossplane-stable/crossplane
+    ```
+
+2. Install the crossplane CLI
+    ```
+    curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
+    ```
+
+3. Add a secret with your AWS credentials
+    1. Create a file named creds.conf populated with your access key and secret access key
+        ```
+        AWS_PROFILE=default && echo -e "[default]\naws_access_key_id = $(aws configure get aws_access_key_id --profile $AWS_PROFILE)\naws_secret_access_key = $(aws configure get aws_secret_access_key --profile $AWS_PROFILE)" > creds.conf
+        ```
+
+    2. (alternate) hand-jam the creds.conf file
+        ```
+        [default]
+        aws_access_key_id = [ACCESS KEY]
+        aws_secret_access_key = [SECRET ACCESS KEY]
+        ```
+
+    3. Create the secret
+        ```
+        kubectl create secret generic aws-creds -n crossplane-system --from-file=creds=./creds.conf
+        ```
+
+4. 
 
 ## Terraform Assist
 
@@ -45,6 +74,7 @@ This section outlines the resources that will be built in AWS if you run the Ter
     ```
     aws s3 ls
     ```
+
 2. Apply the Terraform to build the infrastructure
     ```
     cd assist/

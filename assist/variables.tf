@@ -2,6 +2,10 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
+variable "azs" {
+  default = ["us-east-1a", "us-east-1b"]
+}
+
 variable "bastion_type" {
   default = "t3.small" # 2 x 2
 }

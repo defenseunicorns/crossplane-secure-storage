@@ -1,12 +1,14 @@
 # Public subnet
 resource "aws_subnet" "public_subnet" {
+  count                   = length(var.azs)
+
   vpc_id                  = aws_vpc.cpss_vpc.id
-  cidr_block              = "10.0.0.0/24"
+  cidr_block              = "10.0.${count.index}.0/24"
 
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "cpss-public-0"
+    Name = "cpss-public-${var.azs[count.index]}"
   }
 }
 
@@ -26,7 +28,9 @@ resource "aws_route_table" "public_rte" {
 
 # Associate the public route table with the public subnet
 resource "aws_route_table_association" "public_assoc" {
-  subnet_id      = aws_subnet.public_subnet.id
+  count          = length(var.azs)
+
+  subnet_id      = aws_subnet.public_subnet[count.index].id
   route_table_id = aws_route_table.public_rte.id
 }
 

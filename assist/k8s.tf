@@ -4,7 +4,7 @@ resource "aws_instance" "cpss_k8s" {
 
   key_name               = aws_key_pair.generated_k8s_key.key_name
 
-  subnet_id              = aws_subnet.private_subnet.id
+  subnet_id              = aws_subnet.private_subnet.0.id
   vpc_security_group_ids = [aws_security_group.cpss_k8s_sg.id]
 
   root_block_device {
@@ -16,4 +16,8 @@ resource "aws_instance" "cpss_k8s" {
   tags = {
     Name = "cpss-k8s"
   }
+}
+
+output "k8s_private_ip" {
+  value = aws_instance.cpss_k8s.private_ip
 }
