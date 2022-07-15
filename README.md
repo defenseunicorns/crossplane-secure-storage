@@ -119,7 +119,7 @@ This section outlines the resources that will be built in AWS if you run the Ter
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     chmod +x get_helm.sh 
     ./get_helm.sh 
-    rm .get_helm.sh
+    rm get_helm.sh
 
     # k3d
     curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash

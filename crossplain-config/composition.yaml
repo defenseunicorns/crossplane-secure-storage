@@ -1,0 +1,77 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: rds.aws.securestorage.defenseunicorns.com
+  labels:
+    provider: aws
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: securestorage.defenseunicorns.com/v1alpha1
+    kind: SecurePostgreSQLInstance
+  resources:
+    - name: dbsubnetgroup
+      base:
+        apiVersion: database.aws.crossplane.io/v1beta1
+        kind: DBSubnetGroup
+        spec:
+          forProvider:
+            subnetIdRefs:
+              - name: cpss-private-us-east-1a
+              - name: cpss-private-us-east-1b
+          recliamPolicy: Delete
+          providerRef:
+            name: aws-provider
+    - name: securitygroup
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: SecurityGroup
+        spec:
+          forProvider:
+            region: us-east-1
+            vpcIdSelector: # TODO attach to the vpc :thinking_face:
+              matchControllerRef: true
+            groupName: crossplane-getting-started
+            description: Allow access to PostgreSQL
+            ingress:
+              - fromPort: 5432
+                toPort: 5432
+                ipProtocol: tcp
+                ipRanges:
+                  - cidrIp: 0.0.0.0/0
+                    description: Everywhere
+    - name: rdsinstance
+      base:
+        apiVersion: database.aws.crossplane.io/v1beta1
+        kind: RDSInstance
+        spec:
+          forProvider:
+            region: us-east-1
+            dbSubnetGroupNameSelector:
+              #matchControllerRef: true
+              matchLabels:
+                name: cpss-private-us-east-1a
+            vpcSecurityGroupIDSelector:
+              matchControllerRef: true
+            dbInstanceClass: db.t2.small
+            masterUsername: masteruser
+            engine: postgres
+            engineVersion: "12"
+            skipFinalSnapshotBeforeDeletion: true
+            publiclyAccessible: true
+          writeConnectionSecretToRef:
+            namespace: crossplane-system
+      patches:
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-postgresql"
+        - fromFieldPath: "spec.parameters.storageGB"
+          toFieldPath: "spec.forProvider.allocatedStorage"
+      connectionDetails:
+        - fromConnectionSecretKey: username
+        - fromConnectionSecretKey: password
+        - fromConnectionSecretKey: endpoint
+        - fromConnectionSecretKey: port

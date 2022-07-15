@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xpostgresqlinstances.database.example.org
+  name: rds.aws.securestorage.defenseunicorns.com
 spec:
-  group: database.example.org
+  group: securestorage.defenseunicorns.com
   names:
-    kind: XPostgreSQLInstance
-    plural: xpostgresqlinstances
+    kind: SecurePostgreSQLInstance
+    plural: securepostgresqlinstances
   claimNames:
     kind: PostgreSQLInstance
     plural: postgresqlinstances
